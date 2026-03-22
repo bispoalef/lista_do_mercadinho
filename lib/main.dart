@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lista_do_mercadinho/features/compras/view/pages/dashboard_page.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/theme_provider.dart';
@@ -53,8 +54,11 @@ class MyApp extends StatelessWidget {
               ),
             ),
             themeMode: themeProvider.themeMode,
-            initialRoute: 'home',
-            routes: {'home': (context) => const HomePage()},
+            initialRoute: 'dashboard',
+            routes: {
+              'dashboard': (context) => const DashboardPage(),
+              'home': (context) => const HomePage(),
+            },
           );
         },
       ),
