@@ -70,4 +70,6 @@ class ListaDeProdutos extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void excluirProduto(Produto produto) {}
 }

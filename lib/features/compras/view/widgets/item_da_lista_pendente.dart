@@ -16,41 +16,75 @@ class ItemDaListaPendente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Checkbox(
-          value: false,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          onChanged: (bool? newValue) {
-            list.removerProduto(produto);
-          },
+    return Dismissible(
+      key: ValueKey(produto.id),
+      direction: DismissDirection.endToStart,
+
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.error,
+          borderRadius: BorderRadius.circular(16),
         ),
-        title: Text(
-          produto.nome,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: Icon(
+          Icons.delete_outline_rounded,
+          color: Theme.of(context).colorScheme.onError,
+          size: 28,
         ),
-        subtitle: Text(
-          'Qtd: ${produto.quantidade}  •  R\$ ${produto.preco.toStringAsFixed(2)}',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+
+      onDismissed: (direction) {
+        list.excluirProduto(produto);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${produto.nome} excluído.'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
           ),
-        ),
-        trailing: IconButton(
-          icon: Icon(
-            Icons.edit_outlined,
-            color: Theme.of(context).colorScheme.primary,
+        );
+      },
+
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
           ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => EditProdutoDialog(
-                produto: produto,
-                lista: list,
-              ),
-            );
-          },
+          leading: Checkbox(
+            value: false,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            onChanged: (bool? newValue) {
+              list.removerProduto(produto);
+            },
+          ),
+          title: Text(
+            produto.nome,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Text(
+            'Qtd: ${produto.quantidade}  •  R\$ ${produto.preco.toStringAsFixed(2)}',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          trailing: IconButton(
+            icon: Icon(
+              Icons.edit_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) =>
+                    EditProdutoDialog(produto: produto, lista: list),
+              );
+            },
+          ),
         ),
       ),
     );

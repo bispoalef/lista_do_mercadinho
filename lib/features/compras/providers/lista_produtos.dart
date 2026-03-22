@@ -58,6 +58,12 @@ class ListaDeProdutos extends ChangeNotifier {
     notifyListeners();
   }
 
+  void excluirProduto(Produto produto) {
+    _list.removeWhere((p) => p.id == produto.id);
+    _carrinho.removeWhere((p) => p.id == produto.id);
+    notifyListeners();
+  }
+
   void importarItens(List<Produto> itensParaImportar) {
     for (var item in itensParaImportar) {
       final jaExiste =
