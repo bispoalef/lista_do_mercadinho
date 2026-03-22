@@ -69,6 +69,19 @@ class DbHelper {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // OPERAÇÕES: BUSCA TODOS ITENS
+  // ---------------------------------------------------------------------------
+  Future<List<Map<String, dynamic>>> getAllItensComprados() async {
+    final db = await instance.database;
+    return await db.rawQuery('''
+      SELECT nome, preco, quantidade
+      FROM itens
+      GROUP BY nome
+      ORDER BY nome ASC
+    ''');
+  }
+
   Future<List<Map<String, dynamic>>> getHistoricoCompras() async {
     final db = await instance.database;
     return await db.query('compras', orderBy: 'data DESC');

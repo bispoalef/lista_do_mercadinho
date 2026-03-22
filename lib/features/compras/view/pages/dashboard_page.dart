@@ -196,10 +196,18 @@ class _DashboardPageState extends State<DashboardPage> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, 'home').then((_) {
-            setState(() {});
-          });
+        onPressed: () async {
+          final itens = await DbHelper.instance.getAllItensComprados();
+
+          if (!context.mounted) return;
+
+          if (itens.isEmpty) {
+            Navigator.pushNamed(context, 'home').then((_) {
+              setState(() {});
+            });
+          } else {
+            _mostrarPopUpNovaLista(context);
+          }
         },
         icon: const Icon(Icons.add_shopping_cart),
         label: const Text('Nova Lista'),
@@ -218,6 +226,17 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => _DetalhesCompraSheet(compra: compra),
+    );
+  }
+
+  void _mostrarPopUpNovaLista(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const _NovaListaSheet(),
     );
   }
 }
@@ -262,6 +281,162 @@ class _DetalhesCompraSheet extends StatefulWidget {
 
   @override
   State<_DetalhesCompraSheet> createState() => _DetalhesCompraSheetState();
+}
+
+class _NovaListaSheet extends StatefulWidget {
+  const _NovaListaSheet({Key? key}) : super(key: key);
+
+  @override
+  State<_NovaListaSheet> createState() => _NovaListaSheetState();
+}
+
+class _NovaListaSheetState extends State<_NovaListaSheet> {
+  List<Map<String, dynamic>> _todosItens = [];
+  bool _carregando = true;
+  final Set<String> _itensSelecionados = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarTodosItens();
+  }
+
+  Future<void> _carregarTodosItens() async {
+    final itens = await DbHelper.instance.getAllItensComprados();
+    setState(() {
+      _todosItens = itens;
+      _carregando = false;
+    });
+  }
+
+  void _irParaLista([List<Produto>? itensParaImportar]) {
+    Navigator.pop(context);
+
+    if (itensParaImportar != null && itensParaImportar.isNotEmpty) {
+      Provider.of<ListaDeProdutos>(
+        context,
+        listen: false,
+      ).importarItens(itensParaImportar);
+    }
+
+    Navigator.pushNamed(context, 'home').then((_) {
+      if (context.mounted) {
+        (context as Element).markNeedsBuild();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 0.75;
+
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Nova Lista de Compras',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Selecione os produtos que você quer comprar hoje, ou pule para criar uma lista vazia.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: _carregando
+                ? const Center(child: CircularProgressIndicator())
+                : _todosItens.isEmpty
+                ? const Center(
+                    child: Text('Você ainda não tem itens no histórico.'),
+                  )
+                : ListView.builder(
+                    itemCount: _todosItens.length,
+                    itemBuilder: (context, index) {
+                      final item = _todosItens[index];
+                      final isSelected = _itensSelecionados.contains(
+                        item['nome'],
+                      );
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        title: Text(item['nome']),
+                        subtitle: Text(
+                          'Último valor: R\$ ${(item['preco'] as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              _itensSelecionados.add(item['nome']);
+                            } else {
+                              _itensSelecionados.remove(item['nome']);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _irParaLista(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Pular (Lista Vazia)'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: _itensSelecionados.isEmpty
+                      ? null
+                      : () {
+                          final itensParaImportar = _todosItens
+                              .where(
+                                (i) => _itensSelecionados.contains(i['nome']),
+                              )
+                              .map(
+                                (i) => Produto(
+                                  id: const Uuid().v4(),
+                                  nome: i['nome'],
+                                  preco: (i['preco'] as num).toDouble(),
+                                  quantidade: (i['quantidade'] as num).toInt(),
+                                ),
+                              )
+                              .toList();
+
+                          _irParaLista(itensParaImportar);
+                        },
+                  icon: const Icon(Icons.check),
+                  label: Text('Criar com ${_itensSelecionados.length} itens'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {

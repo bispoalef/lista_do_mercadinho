@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lista_do_mercadinho/core/theme/theme_provider.dart';
 
 import 'package:provider/provider.dart';
 
@@ -101,7 +100,6 @@ class HomePage extends StatelessWidget {
                             if (carrinho.isNotEmpty)
                               FilledButton.icon(
                                 onPressed: () {
-                                  // --- NOVA LÓGICA DO BOTÃO FINALIZAR ---
                                   final controller = TextEditingController();
                                   showDialog(
                                     context: context,
