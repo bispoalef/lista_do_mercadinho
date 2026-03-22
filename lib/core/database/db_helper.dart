@@ -8,6 +8,15 @@ class DbHelper {
 
   DbHelper._init();
 
+  Future<List<Map<String, dynamic>>> getItensDaCompra(String compraId) async {
+    final db = await instance.database;
+    return await db.query(
+      'itens',
+      where: 'compra_id = ?',
+      whereArgs: [compraId],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getHistoricoCompras() async {
     final db = await instance.database;
     return await db.query('compras', orderBy: 'data DESC');

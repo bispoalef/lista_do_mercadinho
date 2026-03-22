@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+
 import 'package:lista_do_mercadinho/core/database/db_helper.dart';
 import 'package:lista_do_mercadinho/core/theme/theme_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:lista_do_mercadinho/features/compras/models/produto.dart';
+import 'package:lista_do_mercadinho/features/compras/providers/lista_produtos.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -18,11 +22,11 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meu Painel'),
         actions: [
-          // <-- Novo botão de tema aqui!
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -33,7 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: DbHelper.instance.getHistoricoCompras(),
         builder: (context, snapshot) {
@@ -98,7 +101,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
               Text(
                 'Últimas Compras',
                 style: Theme.of(context).textTheme.titleLarge,
@@ -109,6 +111,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
+                    onTap: () => _mostrarDetalhesCompra(context, compra),
                     leading: CircleAvatar(
                       backgroundColor: Theme.of(
                         context,
@@ -134,7 +137,6 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         },
       ),
-
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.pushNamed(context, 'home').then((_) {
@@ -144,6 +146,20 @@ class _DashboardPageState extends State<DashboardPage> {
         icon: const Icon(Icons.add_shopping_cart),
         label: const Text('Nova Lista'),
       ),
+    );
+  }
+
+  void _mostrarDetalhesCompra(
+    BuildContext context,
+    Map<String, dynamic> compra,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _DetalhesCompraSheet(compra: compra),
     );
   }
 }
@@ -176,6 +192,132 @@ class _EstatisticaItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DetalhesCompraSheet extends StatefulWidget {
+  final Map<String, dynamic> compra;
+
+  const _DetalhesCompraSheet({Key? key, required this.compra})
+    : super(key: key);
+
+  @override
+  State<_DetalhesCompraSheet> createState() => _DetalhesCompraSheetState();
+}
+
+class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
+  List<Map<String, dynamic>> _itens = [];
+  bool _carregando = true;
+  final Set<String> _itensSelecionados = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarItens();
+  }
+
+  Future<void> _carregarItens() async {
+    final itens = await DbHelper.instance.getItensDaCompra(widget.compra['id']);
+    setState(() {
+      _itens = itens;
+      for (var item in itens) {
+        _itensSelecionados.add(item['id']);
+      }
+      _carregando = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 0.7;
+
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Reaproveitar Compra',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Selecione os itens que deseja adicionar à sua nova lista:',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _carregando
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _itens.length,
+                    itemBuilder: (context, index) {
+                      final item = _itens[index];
+                      final isSelected = _itensSelecionados.contains(
+                        item['id'],
+                      );
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        title: Text(item['nome']),
+                        subtitle: Text(
+                          'Qtd: ${item['quantidade']} | R\$ ${(item['preco'] as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              _itensSelecionados.add(item['id']);
+                            } else {
+                              _itensSelecionados.remove(item['id']);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+          ),
+          ElevatedButton.icon(
+            onPressed: _itensSelecionados.isEmpty
+                ? null
+                : () {
+                    final itensParaImportar = _itens
+                        .where((i) => _itensSelecionados.contains(i['id']))
+                        .map(
+                          (i) => Produto(
+                            id: const Uuid().v4(), // Novo ID para a nova lista
+                            nome: i['nome'],
+                            preco: (i['preco'] as num).toDouble(),
+                            quantidade: i['quantidade'],
+                          ),
+                        )
+                        .toList();
+
+                    Provider.of<ListaDeProdutos>(
+                      context,
+                      listen: false,
+                    ).importarItens(itensParaImportar);
+
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, 'home').then((_) {
+                      if (context.mounted) {
+                        (context as Element).markNeedsBuild();
+                      }
+                    });
+                  },
+            icon: const Icon(Icons.playlist_add_check),
+            label: const Text('Importar para Nova Lista'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

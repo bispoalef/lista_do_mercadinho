@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // Precisamos disso para gerar o ID da Compra
+import 'package:uuid/uuid.dart';
 
 import '../../../core/database/db_helper.dart';
 import '../models/compra.dart';
@@ -19,9 +19,21 @@ class ListaDeProdutos extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> _sugestoes = [];
-  List<Map<String, dynamic>> get sugestoes => [..._sugestoes];
 
-  // O método carregarSugestoes sofre uma pequena alteração para aceitar o Map
+  List<Map<String, dynamic>> get sugestoes {
+    return _sugestoes.where((sugestao) {
+      final nomeSugestao = (sugestao['nome'] as String).toLowerCase();
+      final existeNaLista = _list.any(
+        (p) => p.nome.toLowerCase() == nomeSugestao,
+      );
+      final existeNoCarrinho = _carrinho.any(
+        (p) => p.nome.toLowerCase() == nomeSugestao,
+      );
+
+      return !existeNaLista && !existeNoCarrinho;
+    }).toList();
+  }
+
   Future<void> carregarSugestoes() async {
     _sugestoes = await DbHelper.instance.getItensFrequentes();
     notifyListeners();
@@ -43,6 +55,19 @@ class ListaDeProdutos extends ChangeNotifier {
 
     await carregarSugestoes();
 
+    notifyListeners();
+  }
+
+  void importarItens(List<Produto> itensParaImportar) {
+    for (var item in itensParaImportar) {
+      final jaExiste =
+          _list.any((p) => p.nome.toLowerCase() == item.nome.toLowerCase()) ||
+          _carrinho.any((p) => p.nome.toLowerCase() == item.nome.toLowerCase());
+
+      if (!jaExiste) {
+        _list.add(item);
+      }
+    }
     notifyListeners();
   }
 
