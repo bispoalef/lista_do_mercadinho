@@ -30,10 +30,7 @@ class MyApp extends StatelessWidget {
                 seedColor: Colors.teal,
                 brightness: Brightness.light,
               ),
-              appBarTheme: const AppBarTheme(
-                centerTitle: true,
-                elevation: 0,
-              ),
+              appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
               cardTheme: const CardThemeData(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -47,10 +44,7 @@ class MyApp extends StatelessWidget {
                 seedColor: Colors.teal,
                 brightness: Brightness.dark,
               ),
-              appBarTheme: const AppBarTheme(
-                centerTitle: true,
-                elevation: 0,
-              ),
+              appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
               cardTheme: const CardThemeData(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -60,9 +54,7 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: themeProvider.themeMode,
             initialRoute: 'home',
-            routes: {
-              'home': (context) => const HomePage(),
-            },
+            routes: {'home': (context) => const HomePage()},
           );
         },
       ),

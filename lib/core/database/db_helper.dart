@@ -1,3 +1,4 @@
+import 'package:lista_do_mercadinho/features/compras/models/compra.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -6,6 +7,28 @@ class DbHelper {
   static Database? _database;
 
   DbHelper._init();
+
+  Future<List<Map<String, dynamic>>> getHistoricoCompras() async {
+    final db = await instance.database;
+    return await db.query('compras', orderBy: 'data DESC');
+  }
+
+  Future<void> salvarCompra(Compra compra) async {
+    final db = await instance.database;
+
+    await db.transaction((txn) async {
+      await txn.insert('compras', compra.toMap());
+      for (var item in compra.itens) {
+        await txn.insert('itens', {
+          'id': item.id,
+          'compra_id': compra.id,
+          'nome': item.nome,
+          'preco': item.preco,
+          'quantidade': item.quantidade,
+        });
+      }
+    });
+  }
 
   Future<Database> get database async {
     if (_database != null) return _database!;

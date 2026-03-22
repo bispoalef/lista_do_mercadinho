@@ -100,13 +100,37 @@ class HomePage extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Carrinho: R\$ ${lista.valorTotalCarrinho().toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                        if (carrinho.isNotEmpty)
+                          FilledButton.icon(
+                            onPressed: () async {
+                              await lista.finalizarCompra();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Compra salva no histórico! 🛒',
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.check, size: 18),
+                            label: const Text('Finalizar'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                            ),
+                          )
+                        else
+                          Text(
+                            'Carrinho: R\$ ${lista.valorTotalCarrinho().toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                         Icon(
                           carrinhoOculto
                               ? Icons.keyboard_arrow_up_rounded

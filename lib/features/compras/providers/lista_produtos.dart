@@ -1,16 +1,49 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart'; // Precisamos disso para gerar o ID da Compra
 
-import '../data/lista_mocada.dart';
+import '../../../core/database/db_helper.dart';
+import '../models/compra.dart';
 import '../models/produto.dart';
 
 class ListaDeProdutos extends ChangeNotifier {
-  final List<Produto> _list = List.from(listaMocada);
+  final List<Produto> _list = [];
   final List<Produto> _carrinho = [];
-  bool _mudarEstado = true;
+  bool _mudarEstado = false;
+
+  List<String> _sugestoes = [];
+  List<String> get sugestoes => [..._sugestoes];
 
   List<Produto> get getCarrinho => [..._carrinho];
   List<Produto> get getLista => [..._list];
   bool get getEstado => _mudarEstado;
+
+  ListaDeProdutos() {
+    carregarSugestoes();
+  }
+
+  Future<void> carregarSugestoes() async {
+    _sugestoes = await DbHelper.instance.getItensFrequentes();
+    notifyListeners();
+  }
+
+  Future<void> finalizarCompra() async {
+    if (_carrinho.isEmpty) return;
+
+    final novaCompra = Compra(
+      id: const Uuid().v4(),
+      data: DateTime.now(),
+      valorTotal: valorTotalCarrinho(),
+      itens: [..._carrinho],
+    );
+
+    await DbHelper.instance.salvarCompra(novaCompra);
+
+    _carrinho.clear();
+
+    await carregarSugestoes();
+
+    notifyListeners();
+  }
 
   void ocultarCarrinho() {
     _mudarEstado = !_mudarEstado;
@@ -59,14 +92,12 @@ class ListaDeProdutos extends ChangeNotifier {
     int quantidade,
   ) {
     final index = _list.indexWhere((p) => p.id == produtoAntigo.id);
-
     if (index != -1) {
       _list[index] = produtoAntigo.copyWith(
         nome: nome,
         preco: preco,
         quantidade: quantidade,
       );
-
       notifyListeners();
     }
   }
