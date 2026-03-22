@@ -11,13 +11,7 @@ class Produto {
     required this.quantidade,
   });
 
-  // O método copyWith é o padrão da indústria para atualizar estados imutáveis
-  Produto copyWith({
-    String? id,
-    String? nome,
-    double? preco,
-    int? quantidade,
-  }) {
+  Produto copyWith({String? id, String? nome, double? preco, int? quantidade}) {
     return Produto(
       id: id ?? this.id,
       nome: nome ?? this.nome,

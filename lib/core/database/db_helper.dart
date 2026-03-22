@@ -3,42 +3,17 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DbHelper {
+  // ---------------------------------------------------------------------------
+  // SINGLETON & VARIÁVEIS
+  // ---------------------------------------------------------------------------
   static final DbHelper instance = DbHelper._init();
   static Database? _database;
 
   DbHelper._init();
 
-  Future<List<Map<String, dynamic>>> getItensDaCompra(String compraId) async {
-    final db = await instance.database;
-    return await db.query(
-      'itens',
-      where: 'compra_id = ?',
-      whereArgs: [compraId],
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> getHistoricoCompras() async {
-    final db = await instance.database;
-    return await db.query('compras', orderBy: 'data DESC');
-  }
-
-  Future<void> salvarCompra(Compra compra) async {
-    final db = await instance.database;
-
-    await db.transaction((txn) async {
-      await txn.insert('compras', compra.toMap());
-      for (var item in compra.itens) {
-        await txn.insert('itens', {
-          'id': item.id,
-          'compra_id': compra.id,
-          'nome': item.nome,
-          'preco': item.preco,
-          'quantidade': item.quantidade,
-        });
-      }
-    });
-  }
-
+  // ---------------------------------------------------------------------------
+  // INICIALIZAÇÃO DO BANCO DE DADOS
+  // ---------------------------------------------------------------------------
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('compras_database.db');
@@ -56,6 +31,7 @@ class DbHelper {
     await db.execute('''
       CREATE TABLE compras (
         id TEXT PRIMARY KEY,
+        nome TEXT,
         data TEXT NOT NULL,
         valorTotal REAL NOT NULL
       )
@@ -73,6 +49,48 @@ class DbHelper {
     ''');
   }
 
+  // ---------------------------------------------------------------------------
+  // OPERAÇÕES: COMPRAS
+  // ---------------------------------------------------------------------------
+  Future<void> salvarCompra(Compra compra) async {
+    final db = await instance.database;
+
+    await db.transaction((txn) async {
+      await txn.insert('compras', compra.toMap());
+      for (var item in compra.itens) {
+        await txn.insert('itens', {
+          'id': item.id,
+          'compra_id': compra.id,
+          'nome': item.nome,
+          'preco': item.preco,
+          'quantidade': item.quantidade,
+        });
+      }
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getHistoricoCompras() async {
+    final db = await instance.database;
+    return await db.query('compras', orderBy: 'data DESC');
+  }
+
+  Future<void> excluirCompra(String id) async {
+    final db = await instance.database;
+    await db.delete('compras', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ---------------------------------------------------------------------------
+  // OPERAÇÕES: ITENS
+  // ---------------------------------------------------------------------------
+  Future<List<Map<String, dynamic>>> getItensDaCompra(String compraId) async {
+    final db = await instance.database;
+    return await db.query(
+      'itens',
+      where: 'compra_id = ?',
+      whereArgs: [compraId],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getItensFrequentes() async {
     final db = await instance.database;
     return await db.rawQuery('''
@@ -84,6 +102,9 @@ class DbHelper {
     ''');
   }
 
+  // ---------------------------------------------------------------------------
+  // OPERAÇÕES: ESTATÍSTICAS
+  // ---------------------------------------------------------------------------
   Future<List<Map<String, dynamic>>> getEstatisticasMensais(String ano) async {
     final db = await instance.database;
     return await db.rawQuery(
@@ -98,6 +119,9 @@ class DbHelper {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // ENCERRAMENTO
+  // ---------------------------------------------------------------------------
   Future close() async {
     final db = await instance.database;
     db.close();

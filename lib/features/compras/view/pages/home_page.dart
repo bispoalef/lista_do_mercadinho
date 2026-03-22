@@ -100,18 +100,58 @@ class HomePage extends StatelessWidget {
                           children: [
                             if (carrinho.isNotEmpty)
                               FilledButton.icon(
-                                onPressed: () async {
-                                  await lista.finalizarCompra();
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Compra salva no histórico! 🛒',
+                                onPressed: () {
+                                  // --- NOVA LÓGICA DO BOTÃO FINALIZAR ---
+                                  final controller = TextEditingController();
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Finalizar Compra'),
+                                      content: TextField(
+                                        controller: controller,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Apelido (Opcional)',
+                                          hintText: 'Ex: Compra do Mês',
                                         ),
-                                        behavior: SnackBarBehavior.floating,
+                                        textCapitalization:
+                                            TextCapitalization.sentences,
                                       ),
-                                    );
-                                  }
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () async {
+                                            final nome = controller.text.trim();
+                                            await lista.finalizarCompra(
+                                              apelido: nome.isEmpty
+                                                  ? null
+                                                  : nome,
+                                            );
+
+                                            if (context.mounted) {
+                                              Navigator.pop(context);
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Compra salva! 🛒',
+                                                  ),
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          child: const Text('Salvar e Sair'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                                 },
                                 icon: const Icon(Icons.check, size: 18),
                                 label: const Text('Finalizar'),

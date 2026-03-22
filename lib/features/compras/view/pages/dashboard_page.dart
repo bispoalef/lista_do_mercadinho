@@ -108,25 +108,83 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 10),
               ...compras.map((compra) {
                 final dataCompra = DateTime.parse(compra['data']);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    onTap: () => _mostrarDetalhesCompra(context, compra),
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.secondaryContainer,
-                      child: const Icon(Icons.shopping_cart_outlined),
+                final String? apelido = compra['nome']; // Pode vir nulo
+
+                return Dismissible(
+                  key: ValueKey(compra['id']),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    title: Text(
-                      formatadorData.format(dataCompra),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.onError,
+                      size: 28,
                     ),
-                    trailing: Text(
-                      formatadorMoeda.format(compra['valorTotal']),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Apagar Histórico"),
+                            content: const Text(
+                              "Deseja realmente excluir esta compra do seu histórico?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Cancelar"),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.error,
+                                ),
+                                child: const Text("Excluir"),
+                              ),
+                            ],
+                          ),
+                        ) ??
+                        false;
+                  },
+                  onDismissed: (direction) async {
+                    await DbHelper.instance.excluirCompra(compra['id']);
+                    setState(() {});
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      onTap: () => _mostrarDetalhesCompra(context, compra),
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondaryContainer,
+                        child: const Icon(Icons.shopping_cart_outlined),
+                      ),
+                      title: Text(
+                        apelido != null && apelido.isNotEmpty
+                            ? apelido
+                            : formatadorData.format(dataCompra),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: apelido != null && apelido.isNotEmpty
+                          ? Text(formatadorData.format(dataCompra))
+                          : null,
+                      trailing: Text(
+                        formatadorMoeda.format(compra['valorTotal']),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -289,7 +347,7 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
                         .where((i) => _itensSelecionados.contains(i['id']))
                         .map(
                           (i) => Produto(
-                            id: const Uuid().v4(), // Novo ID para a nova lista
+                            id: const Uuid().v4(),
                             nome: i['nome'],
                             preco: (i['preco'] as num).toDouble(),
                             quantidade: i['quantidade'],

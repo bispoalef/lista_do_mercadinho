@@ -39,11 +39,12 @@ class ListaDeProdutos extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> finalizarCompra() async {
+  Future<void> finalizarCompra({String? apelido}) async {
     if (_carrinho.isEmpty) return;
 
     final novaCompra = Compra(
       id: const Uuid().v4(),
+      nome: apelido,
       data: DateTime.now(),
       valorTotal: valorTotalCarrinho(),
       itens: [..._carrinho],
@@ -52,9 +53,7 @@ class ListaDeProdutos extends ChangeNotifier {
     await DbHelper.instance.salvarCompra(novaCompra);
 
     _carrinho.clear();
-
     await carregarSugestoes();
-
     notifyListeners();
   }
 
