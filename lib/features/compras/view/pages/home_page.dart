@@ -131,18 +131,19 @@ class HomePage extends StatelessWidget {
 
                                             if (context.mounted) {
                                               Navigator.pop(context);
-                                              Navigator.pop(context);
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                    'Compra salva! 🛒',
+                                                    'Compra salva com sucesso! 🛒',
                                                   ),
                                                   behavior:
                                                       SnackBarBehavior.floating,
                                                 ),
                                               );
+
+                                              Navigator.pop(context);
                                             }
                                           },
                                           child: const Text('Salvar e Sair'),

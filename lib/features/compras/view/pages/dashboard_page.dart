@@ -19,6 +19,20 @@ class _DashboardPageState extends State<DashboardPage> {
   final formatadorMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   final formatadorData = DateFormat('dd/MM/yyyy - HH:mm');
 
+  late Future<List<Map<String, dynamic>>> _historicoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _atualizarPainel();
+  }
+
+  void _atualizarPainel() {
+    setState(() {
+      _historicoFuture = DbHelper.instance.getHistoricoCompras();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -38,7 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: DbHelper.instance.getHistoricoCompras(),
+        future: _historicoFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -108,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 10),
               ...compras.map((compra) {
                 final dataCompra = DateTime.parse(compra['data']);
-                final String? apelido = compra['nome']; // Pode vir nulo
+                final String? apelido = compra['nome'];
 
                 return Dismissible(
                   key: ValueKey(compra['id']),
@@ -158,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   },
                   onDismissed: (direction) async {
                     await DbHelper.instance.excluirCompra(compra['id']);
-                    setState(() {});
+                    _atualizarPainel();
                   },
                   child: Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -198,12 +212,11 @@ class _DashboardPageState extends State<DashboardPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final itens = await DbHelper.instance.getAllItensComprados();
-
           if (!context.mounted) return;
 
           if (itens.isEmpty) {
             Navigator.pushNamed(context, 'home').then((_) {
-              setState(() {});
+              _atualizarPainel();
             });
           } else {
             _mostrarPopUpNovaLista(context);
@@ -225,7 +238,8 @@ class _DashboardPageState extends State<DashboardPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _DetalhesCompraSheet(compra: compra),
+      builder: (context) =>
+          _DetalhesCompraSheet(compra: compra, onAtualizar: _atualizarPainel),
     );
   }
 
@@ -236,7 +250,7 @@ class _DashboardPageState extends State<DashboardPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const _NovaListaSheet(),
+      builder: (context) => _NovaListaSheet(onAtualizar: _atualizarPainel),
     );
   }
 }
@@ -244,7 +258,6 @@ class _DashboardPageState extends State<DashboardPage> {
 class _EstatisticaItem extends StatelessWidget {
   final String titulo;
   final String valor;
-
   const _EstatisticaItem({required this.titulo, required this.valor});
 
   @override
@@ -275,168 +288,16 @@ class _EstatisticaItem extends StatelessWidget {
 
 class _DetalhesCompraSheet extends StatefulWidget {
   final Map<String, dynamic> compra;
+  final VoidCallback onAtualizar;
 
-  const _DetalhesCompraSheet({Key? key, required this.compra})
-    : super(key: key);
+  const _DetalhesCompraSheet({
+    Key? key,
+    required this.compra,
+    required this.onAtualizar,
+  }) : super(key: key);
 
   @override
   State<_DetalhesCompraSheet> createState() => _DetalhesCompraSheetState();
-}
-
-class _NovaListaSheet extends StatefulWidget {
-  const _NovaListaSheet({Key? key}) : super(key: key);
-
-  @override
-  State<_NovaListaSheet> createState() => _NovaListaSheetState();
-}
-
-class _NovaListaSheetState extends State<_NovaListaSheet> {
-  List<Map<String, dynamic>> _todosItens = [];
-  bool _carregando = true;
-  final Set<String> _itensSelecionados = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarTodosItens();
-  }
-
-  Future<void> _carregarTodosItens() async {
-    final itens = await DbHelper.instance.getAllItensComprados();
-    setState(() {
-      _todosItens = itens;
-      _carregando = false;
-    });
-  }
-
-  void _irParaLista([List<Produto>? itensParaImportar]) {
-    Navigator.pop(context);
-
-    if (itensParaImportar != null && itensParaImportar.isNotEmpty) {
-      Provider.of<ListaDeProdutos>(
-        context,
-        listen: false,
-      ).importarItens(itensParaImportar);
-    }
-
-    Navigator.pushNamed(context, 'home').then((_) {
-      if (context.mounted) {
-        (context as Element).markNeedsBuild();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height * 0.75;
-
-    return Container(
-      height: height,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Nova Lista de Compras',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Selecione os produtos que você quer comprar hoje, ou pule para criar uma lista vazia.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: _carregando
-                ? const Center(child: CircularProgressIndicator())
-                : _todosItens.isEmpty
-                ? const Center(
-                    child: Text('Você ainda não tem itens no histórico.'),
-                  )
-                : ListView.builder(
-                    itemCount: _todosItens.length,
-                    itemBuilder: (context, index) {
-                      final item = _todosItens[index];
-                      final isSelected = _itensSelecionados.contains(
-                        item['nome'],
-                      );
-
-                      return CheckboxListTile(
-                        value: isSelected,
-                        title: Text(item['nome']),
-                        subtitle: Text(
-                          'Último valor: R\$ ${(item['preco'] as num).toDouble().toStringAsFixed(2)}',
-                        ),
-                        onChanged: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              _itensSelecionados.add(item['nome']);
-                            } else {
-                              _itensSelecionados.remove(item['nome']);
-                            }
-                          });
-                        },
-                      );
-                    },
-                  ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _irParaLista(),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Pular (Lista Vazia)'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: _itensSelecionados.isEmpty
-                      ? null
-                      : () {
-                          final itensParaImportar = _todosItens
-                              .where(
-                                (i) => _itensSelecionados.contains(i['nome']),
-                              )
-                              .map(
-                                (i) => Produto(
-                                  id: const Uuid().v4(),
-                                  nome: i['nome'],
-                                  preco: (i['preco'] as num).toDouble(),
-                                  quantidade: (i['quantidade'] as num).toInt(),
-                                ),
-                              )
-                              .toList();
-
-                          _irParaLista(itensParaImportar);
-                        },
-                  icon: const Icon(Icons.check),
-                  label: Text('Criar com ${_itensSelecionados.length} itens'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
@@ -454,9 +315,7 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
     final itens = await DbHelper.instance.getItensDaCompra(widget.compra['id']);
     setState(() {
       _itens = itens;
-      for (var item in itens) {
-        _itensSelecionados.add(item['id']);
-      }
+      for (var item in itens) _itensSelecionados.add(item['id']);
       _carregando = false;
     });
   }
@@ -464,7 +323,6 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 0.7;
-
     return Container(
       height: height,
       padding: const EdgeInsets.all(16),
@@ -494,7 +352,6 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
                       final isSelected = _itensSelecionados.contains(
                         item['id'],
                       );
-
                       return CheckboxListTile(
                         value: isSelected,
                         title: Text(item['nome']),
@@ -503,11 +360,9 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
                         ),
                         onChanged: (bool? value) {
                           setState(() {
-                            if (value == true) {
-                              _itensSelecionados.add(item['id']);
-                            } else {
-                              _itensSelecionados.remove(item['id']);
-                            }
+                            value == true
+                                ? _itensSelecionados.add(item['id'])
+                                : _itensSelecionados.remove(item['id']);
                           });
                         },
                       );
@@ -536,11 +391,11 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
                     ).importarItens(itensParaImportar);
 
                     Navigator.pop(context);
-                    Navigator.pushNamed(context, 'home').then((_) {
-                      if (context.mounted) {
-                        (context as Element).markNeedsBuild();
-                      }
-                    });
+                    // Puxa o gatilho ao voltar!
+                    Navigator.pushNamed(
+                      context,
+                      'home',
+                    ).then((_) => widget.onAtualizar());
                   },
             icon: const Icon(Icons.playlist_add_check),
             label: const Text('Importar para Nova Lista'),
@@ -548,6 +403,151 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NovaListaSheet extends StatefulWidget {
+  final VoidCallback onAtualizar;
+
+  const _NovaListaSheet({Key? key, required this.onAtualizar})
+    : super(key: key);
+
+  @override
+  State<_NovaListaSheet> createState() => _NovaListaSheetState();
+}
+
+class _NovaListaSheetState extends State<_NovaListaSheet> {
+  List<Map<String, dynamic>> _todosItens = [];
+  bool _carregando = true;
+  final Set<String> _itensSelecionados = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarTodosItens();
+  }
+
+  Future<void> _carregarTodosItens() async {
+    final itens = await DbHelper.instance.getAllItensComprados();
+    setState(() {
+      _todosItens = itens;
+      _carregando = false;
+    });
+  }
+
+  void _irParaLista([List<Produto>? itensParaImportar]) {
+    Navigator.pop(context);
+    if (itensParaImportar != null && itensParaImportar.isNotEmpty) {
+      Provider.of<ListaDeProdutos>(
+        context,
+        listen: false,
+      ).importarItens(itensParaImportar);
+    }
+    Navigator.pushNamed(context, 'home').then((_) => widget.onAtualizar());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 0.75;
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Nova Lista de Compras',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Selecione os produtos que você quer comprar hoje, ou pule para criar uma lista vazia.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _carregando
+                ? const Center(child: CircularProgressIndicator())
+                : _todosItens.isEmpty
+                ? const Center(
+                    child: Text('Você ainda não tem itens no histórico.'),
+                  )
+                : ListView.builder(
+                    itemCount: _todosItens.length,
+                    itemBuilder: (context, index) {
+                      final item = _todosItens[index];
+                      final isSelected = _itensSelecionados.contains(
+                        item['nome'],
+                      );
+                      return CheckboxListTile(
+                        value: isSelected,
+                        title: Text(item['nome']),
+                        subtitle: Text(
+                          'Último valor: R\$ ${(item['preco'] as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            value == true
+                                ? _itensSelecionados.add(item['nome'])
+                                : _itensSelecionados.remove(item['nome']);
+                          });
+                        },
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _irParaLista(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Pular'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: _itensSelecionados.isEmpty
+                      ? null
+                      : () {
+                          final itensParaImportar = _todosItens
+                              .where(
+                                (i) => _itensSelecionados.contains(i['nome']),
+                              )
+                              .map(
+                                (i) => Produto(
+                                  id: const Uuid().v4(),
+                                  nome: i['nome'],
+                                  preco: (i['preco'] as num).toDouble(),
+                                  quantidade: (i['quantidade'] as num).toInt(),
+                                ),
+                              )
+                              .toList();
+                          _irParaLista(itensParaImportar);
+                        },
+                  icon: const Icon(Icons.check),
+                  label: Text('Criar com ${_itensSelecionados.length} itens'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
