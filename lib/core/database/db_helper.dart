@@ -64,16 +64,15 @@ class DbHelper {
     ''');
   }
 
-  Future<List<String>> getItensFrequentes() async {
+  Future<List<Map<String, dynamic>>> getItensFrequentes() async {
     final db = await instance.database;
-    final result = await db.rawQuery('''
-      SELECT nome, COUNT(nome) as frequencia 
+    return await db.rawQuery('''
+      SELECT nome, preco, quantidade, COUNT(nome) as frequencia 
       FROM itens 
       GROUP BY nome 
       ORDER BY frequencia DESC 
       LIMIT 10
     ''');
-    return result.map((json) => json['nome'] as String).toList();
   }
 
   Future<List<Map<String, dynamic>>> getEstatisticasMensais(String ano) async {

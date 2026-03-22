@@ -14,7 +14,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lista = Provider.of<ListaDeProdutos>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final size = MediaQuery.of(context).size;
 
     final carrinho = lista.getCarrinho;
@@ -22,20 +21,9 @@ class HomePage extends StatelessWidget {
     final carrinhoOculto = lista.getEstado;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Lista de Compras'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-            ),
-            onPressed: () {
-              themeProvider.toggleTheme();
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Lista de Compras')),
       body: Column(
         children: [
           Expanded(

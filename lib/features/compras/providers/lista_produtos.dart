@@ -10,9 +10,6 @@ class ListaDeProdutos extends ChangeNotifier {
   final List<Produto> _carrinho = [];
   bool _mudarEstado = false;
 
-  List<String> _sugestoes = [];
-  List<String> get sugestoes => [..._sugestoes];
-
   List<Produto> get getCarrinho => [..._carrinho];
   List<Produto> get getLista => [..._list];
   bool get getEstado => _mudarEstado;
@@ -21,6 +18,10 @@ class ListaDeProdutos extends ChangeNotifier {
     carregarSugestoes();
   }
 
+  List<Map<String, dynamic>> _sugestoes = [];
+  List<Map<String, dynamic>> get sugestoes => [..._sugestoes];
+
+  // O método carregarSugestoes sofre uma pequena alteração para aceitar o Map
   Future<void> carregarSugestoes() async {
     _sugestoes = await DbHelper.instance.getItensFrequentes();
     notifyListeners();

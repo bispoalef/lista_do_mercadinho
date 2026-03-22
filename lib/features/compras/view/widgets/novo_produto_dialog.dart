@@ -58,7 +58,47 @@ class _NovoProdutoDialogState extends State<NovoProdutoDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.lista.sugestoes.isNotEmpty) ...[
+              Text(
+                'Mais comprados:',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: widget.lista.sugestoes.map((sugestao) {
+                  final nome = sugestao['nome'] as String;
+
+                  final preco = (sugestao['preco'] as num).toDouble();
+                  final quantidade = (sugestao['quantidade'] as num).toInt();
+
+                  return ActionChip(
+                    label: Text(nome),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    side: BorderSide.none,
+                    onPressed: () {
+                      setState(() {
+                        _nomeController.text = nome;
+                        _quantidadeController.text = quantidade.toString();
+                        _precoController.text = preco.toStringAsFixed(2);
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+            ],
+
             TextField(
               controller: _nomeController,
               decoration: const InputDecoration(labelText: 'Nome do Produto'),
@@ -74,8 +114,9 @@ class _NovoProdutoDialogState extends State<NovoProdutoDialog> {
             TextField(
               controller: _precoController,
               decoration: const InputDecoration(labelText: 'Preço Unitário'),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
             ),
           ],
         ),
@@ -85,10 +126,7 @@ class _NovoProdutoDialogState extends State<NovoProdutoDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _salvar,
-          child: const Text('Adicionar'),
-        ),
+        ElevatedButton(onPressed: _salvar, child: const Text('Adicionar')),
       ],
     );
   }

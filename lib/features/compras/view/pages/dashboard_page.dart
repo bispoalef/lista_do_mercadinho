@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lista_do_mercadinho/core/database/db_helper.dart';
+import 'package:lista_do_mercadinho/core/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -15,8 +17,23 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Meu Painel')),
+      appBar: AppBar(
+        title: const Text('Meu Painel'),
+        actions: [
+          // <-- Novo botão de tema aqui!
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
+      ),
+
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: DbHelper.instance.getHistoricoCompras(),
         builder: (context, snapshot) {
