@@ -34,7 +34,34 @@ class ItemDaListaPendente extends StatelessWidget {
           size: 28,
         ),
       ),
-
+      confirmDismiss: (direction) async {
+        return await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Confirmar Exclusão"),
+                  content: Text(
+                    "Deseja realmente remover '${produto.nome}' da sua lista?",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text("Cancelar"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      child: const Text("Excluir"),
+                    ),
+                  ],
+                );
+              },
+            ) ??
+            false;
+      },
+      // ---------------------------------
       onDismissed: (direction) {
         list.excluirProduto(produto);
         ScaffoldMessenger.of(context).showSnackBar(
