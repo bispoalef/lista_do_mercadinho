@@ -209,21 +209,79 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final itens = await DbHelper.instance.getAllItensComprados();
-          if (!context.mounted) return;
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 60.0,
+        ), // Evita ficar em cima do anúncio
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            final db = DbHelper.instance;
+            final rascunho = await db
+                .getRascunho(); // 1. Checa se tem rascunho salvo
 
-          if (itens.isEmpty) {
-            Navigator.pushNamed(context, 'home').then((_) {
-              _atualizarPainel();
-            });
-          } else {
-            _mostrarPopUpNovaLista(context);
-          }
-        },
-        icon: const Icon(Icons.add_shopping_cart),
-        label: const Text('Nova Lista'),
+            if (!context.mounted) return;
+
+            // --- SE EXISTIR RASCUNHO, PERGUNTA O QUE FAZER ---
+            if (rascunho.isNotEmpty) {
+              final bool? continuar = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Lista em Andamento'),
+                  content: const Text(
+                    'Você tem uma lista de compras que não foi finalizada. Deseja continuar de onde parou?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        // Limpa o rascunho do banco e retorna false
+                        db.salvarNoRascunho([]);
+                        Navigator.pop(context, false);
+                      },
+                      child: const Text('Descartar e Criar Nova'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Continuar Lista'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (continuar == true) {
+                await Provider.of<ListaDeProdutos>(
+                  context,
+                  listen: false,
+                ).carregarRascunho();
+                if (context.mounted) {
+                  Navigator.pushNamed(
+                    context,
+                    'home',
+                  ).then((_) => _atualizarPainel());
+                }
+                return;
+              }
+            }
+
+            await Provider.of<ListaDeProdutos>(
+              context,
+              listen: false,
+            ).carregarRascunho();
+
+            final itens = await db.getAllItensComprados();
+            if (!context.mounted) return;
+
+            if (itens.isEmpty) {
+              Navigator.pushNamed(
+                context,
+                'home',
+              ).then((_) => _atualizarPainel());
+            } else {
+              _mostrarPopUpNovaLista(context);
+            }
+          },
+          icon: const Icon(Icons.add_shopping_cart),
+          label: const Text('Nova Lista'),
+        ),
       ),
     );
   }

@@ -24,4 +24,8 @@ class Produto {
   String toString() {
     return 'Produto(id: $id, nome: $nome, preco: $preco, quantidade: $quantidade)';
   }
+
+  Map<String, dynamic> toMap() {
+    return {'id': id, 'nome': nome, 'preco': preco, 'quantidade': quantidade};
+  }
 }

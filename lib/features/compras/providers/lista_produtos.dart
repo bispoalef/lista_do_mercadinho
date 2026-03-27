@@ -6,8 +6,8 @@ import '../models/compra.dart';
 import '../models/produto.dart';
 
 class ListaDeProdutos extends ChangeNotifier {
-  final List<Produto> _list = [];
-  final List<Produto> _carrinho = [];
+  List<Produto> _list = [];
+  List<Produto> _carrinho = [];
   bool _mudarEstado = false;
 
   List<Produto> get getCarrinho => [..._carrinho];
@@ -53,7 +53,10 @@ class ListaDeProdutos extends ChangeNotifier {
     await DbHelper.instance.salvarCompra(novaCompra);
 
     _carrinho.clear();
-    await carregarSugestoes();
+    _list.clear();
+
+    _persistirRascunho();
+
     notifyListeners();
   }
 
@@ -89,9 +92,63 @@ class ListaDeProdutos extends ChangeNotifier {
     return total;
   }
 
-  void adicionarProduto(Produto produto) {
-    _list.add(produto);
+  void adicionarProduto(String nome, int qtd, double? preco) {
+    final novo = Produto(
+      id: const Uuid().v4(),
+      nome: nome,
+      quantidade: qtd,
+      preco: preco ?? 0.0,
+    );
+
+    _list.add(novo);
+    _persistirRascunho();
     notifyListeners();
+  }
+
+  void atualizarProduto(Produto produtoAtualizado) {
+    int index = _list.indexWhere((p) => p.id == produtoAtualizado.id);
+
+    if (index != -1) {
+      _list[index] = produtoAtualizado;
+    } else {
+      index = _carrinho.indexWhere((p) => p.id == produtoAtualizado.id);
+      if (index != -1) {
+        _carrinho[index] = produtoAtualizado;
+      }
+    }
+
+    _persistirRascunho();
+    notifyListeners();
+  }
+
+  Future<void> carregarRascunho() async {
+    final dados = await DbHelper.instance.getRascunho();
+    _list = [];
+    _carrinho = [];
+
+    for (var item in dados) {
+      final p = Produto(
+        id: const Uuid().v4(),
+        nome: item['nome'],
+        quantidade: item['quantidade'],
+        preco: item['preco'],
+      );
+
+      if (item['noCarrinho'] == 1) {
+        _carrinho.add(p);
+      } else {
+        _list.add(p);
+      }
+    }
+    notifyListeners();
+  }
+
+  void _persistirRascunho() {
+    final listaMapeada = [
+      ..._list.map((p) => {...p.toMap(), 'noCarrinho': 0}),
+      ..._carrinho.map((p) => {...p.toMap(), 'noCarrinho': 1}),
+    ];
+    DbHelper.instance.salvarNoRascunho(listaMapeada);
   }
 
   void inserirNoIndex(int index, Produto prod) {

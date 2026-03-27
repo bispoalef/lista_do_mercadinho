@@ -29,6 +29,16 @@ class DbHelper {
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
+    CREATE TABLE rascunho (
+      id TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      preco REAL,
+      quantidade INTEGER NOT NULL,
+      noCarrinho INTEGER NOT NULL -- 0 para falso, 1 para verdadeiro
+    )
+  ''');
+
+    await db.execute('''
       CREATE TABLE compras (
         id TEXT PRIMARY KEY,
         nome TEXT,
@@ -47,6 +57,22 @@ class DbHelper {
         FOREIGN KEY (compra_id) REFERENCES compras (id) ON DELETE CASCADE
       )
     ''');
+  }
+
+  // ---------------------------------------------------------------------------
+  // OPERAÇÕES: RASCUNHO
+  // ---------------------------------------------------------------------------
+  Future<void> salvarNoRascunho(List<Map<String, dynamic>> itens) async {
+    final db = await instance.database;
+    await db.delete('rascunho'); // Limpa o rascunho antigo
+    for (var item in itens) {
+      await db.insert('rascunho', item);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRascunho() async {
+    final db = await instance.database;
+    return await db.query('rascunho');
   }
 
   // ---------------------------------------------------------------------------
