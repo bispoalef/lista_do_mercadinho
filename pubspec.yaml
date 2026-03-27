@@ -20,7 +20,12 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.11.1
-
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "icone_base.png"
+  adaptive_icon_background: "#2F4F4F" 
+  adaptive_icon_foreground: "icone_base.png"
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -42,6 +47,7 @@ dependencies:
   intl: ^0.20.2
   sqflite_common_ffi: ^2.4.0+2
   sqflite_common_ffi_web: ^1.1.1
+  google_mobile_ads: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +59,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

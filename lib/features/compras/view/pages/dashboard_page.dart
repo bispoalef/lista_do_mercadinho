@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -9,10 +10,17 @@ import 'package:lista_do_mercadinho/features/compras/models/produto.dart';
 import 'package:lista_do_mercadinho/features/compras/providers/lista_produtos.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+  const DashboardPage({super.key});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class BannerAnuncio extends StatefulWidget {
+  const BannerAnuncio({super.key});
+
+  @override
+  State<BannerAnuncio> createState() => _BannerAnuncioState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
@@ -51,177 +59,182 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _historicoFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _historicoFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text(
-                'Nenhum histórico ainda.\nCrie sua primeira lista!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.outline,
-                  fontSize: 16,
-                ),
-              ),
-            );
-          }
-
-          final compras = snapshot.data!;
-
-          final gastoTotal = compras.fold<double>(
-            0,
-            (soma, item) => soma + (item['valorTotal'] as double),
-          );
-          final gastoMedio = gastoTotal / compras.length;
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Estatísticas Gerais',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _EstatisticaItem(
-                            titulo: 'Gasto Total',
-                            valor: formatadorMoeda.format(gastoTotal),
-                          ),
-                          _EstatisticaItem(
-                            titulo: 'Média/Lista',
-                            valor: formatadorMoeda.format(gastoMedio),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Últimas Compras',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 10),
-              ...compras.map((compra) {
-                final dataCompra = DateTime.parse(compra['data']);
-                final String? apelido = compra['nome'];
-
-                return Dismissible(
-                  key: ValueKey(compra['id']),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.error,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: Theme.of(context).colorScheme.onError,
-                      size: 28,
-                    ),
-                  ),
-                  confirmDismiss: (direction) async {
-                    return await showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Apagar Histórico"),
-                            content: const Text(
-                              "Deseja realmente excluir esta compra do seu histórico?",
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: const Text("Cancelar"),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.error,
-                                ),
-                                child: const Text("Excluir"),
-                              ),
-                            ],
-                          ),
-                        ) ??
-                        false;
-                  },
-                  onDismissed: (direction) async {
-                    await DbHelper.instance.excluirCompra(compra['id']);
-                    _atualizarPainel();
-                  },
-                  child: Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      onTap: () => _mostrarDetalhesCompra(context, compra),
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.secondaryContainer,
-                        child: const Icon(Icons.shopping_cart_outlined),
-                      ),
-                      title: Text(
-                        apelido != null && apelido.isNotEmpty
-                            ? apelido
-                            : formatadorData.format(dataCompra),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: apelido != null && apelido.isNotEmpty
-                          ? Text(formatadorData.format(dataCompra))
-                          : null,
-                      trailing: Text(
-                        formatadorMoeda.format(compra['valorTotal']),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Nenhum histórico ainda.\nCrie sua primeira lista!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.outline,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
+                  );
+                }
+
+                final compras = snapshot.data!;
+
+                final gastoTotal = compras.fold<double>(
+                  0,
+                  (soma, item) => soma + (item['valorTotal'] as double),
                 );
-              }),
-              const SizedBox(height: 80),
-            ],
-          );
-        },
+                final gastoMedio = gastoTotal / compras.length;
+
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Card(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Estatísticas Gerais',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _EstatisticaItem(
+                                  titulo: 'Gasto Total',
+                                  valor: formatadorMoeda.format(gastoTotal),
+                                ),
+                                _EstatisticaItem(
+                                  titulo: 'Média/Lista',
+                                  valor: formatadorMoeda.format(gastoMedio),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Últimas Compras',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 10),
+                    ...compras.map((compra) {
+                      final dataCompra = DateTime.parse(compra['data']);
+                      final String? apelido = compra['nome'];
+
+                      return Dismissible(
+                        key: ValueKey(compra['id']),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          child: Icon(
+                            Icons.delete_outline,
+                            color: Theme.of(context).colorScheme.onError,
+                            size: 28,
+                          ),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("Apagar Histórico"),
+                                  content: const Text(
+                                    "Deseja realmente excluir esta compra do seu histórico?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text("Cancelar"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
+                                      child: const Text("Excluir"),
+                                    ),
+                                  ],
+                                ),
+                              ) ??
+                              false;
+                        },
+                        onDismissed: (direction) async {
+                          await DbHelper.instance.excluirCompra(compra['id']);
+                          _atualizarPainel();
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            onTap: () =>
+                                _mostrarDetalhesCompra(context, compra),
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.secondaryContainer,
+                              child: const Icon(Icons.shopping_cart_outlined),
+                            ),
+                            title: Text(
+                              apelido != null && apelido.isNotEmpty
+                                  ? apelido
+                                  : formatadorData.format(dataCompra),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: apelido != null && apelido.isNotEmpty
+                                ? Text(formatadorData.format(dataCompra))
+                                : null,
+                            trailing: Text(
+                              formatadorMoeda.format(compra['valorTotal']),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 80),
+                  ],
+                );
+              },
+            ),
+          ),
+          const BannerAnuncio(),
+        ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 60.0,
-        ), // Evita ficar em cima do anúncio
+        padding: const EdgeInsets.only(bottom: 60.0),
         child: FloatingActionButton.extended(
           onPressed: () async {
             final db = DbHelper.instance;
-            final rascunho = await db
-                .getRascunho(); // 1. Checa se tem rascunho salvo
-
+            final rascunho = await db.getRascunho();
             if (!context.mounted) return;
 
-            // --- SE EXISTIR RASCUNHO, PERGUNTA O QUE FAZER ---
             if (rascunho.isNotEmpty) {
               final bool? continuar = await showDialog<bool>(
                 context: context,
@@ -233,7 +246,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        // Limpa o rascunho do banco e retorna false
                         db.salvarNoRascunho([]);
                         Navigator.pop(context, false);
                       },
@@ -313,6 +325,61 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+class _BannerAnuncioState extends State<BannerAnuncio> {
+  BannerAd? _bannerAd;
+  bool _isLoaded = false;
+  final String _adUnitId = 'ca-app-pub-3940256099942544/6300978111';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarBanner();
+  }
+
+  void _carregarBanner() {
+    _bannerAd = BannerAd(
+      adUnitId: _adUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('Falha no Banner: $error');
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoaded && _bannerAd != null) {
+      return SafeArea(
+        child: Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          alignment: Alignment.center,
+          width: _bannerAd!.size.width.toDouble(),
+          height: _bannerAd!.size.height.toDouble(),
+          child: AdWidget(ad: _bannerAd!),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
 class _EstatisticaItem extends StatelessWidget {
   final String titulo;
   final String valor;
@@ -348,11 +415,7 @@ class _DetalhesCompraSheet extends StatefulWidget {
   final Map<String, dynamic> compra;
   final VoidCallback onAtualizar;
 
-  const _DetalhesCompraSheet({
-    Key? key,
-    required this.compra,
-    required this.onAtualizar,
-  }) : super(key: key);
+  const _DetalhesCompraSheet({required this.compra, required this.onAtualizar});
 
   @override
   State<_DetalhesCompraSheet> createState() => _DetalhesCompraSheetState();
@@ -471,8 +534,7 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
 class _NovaListaSheet extends StatefulWidget {
   final VoidCallback onAtualizar;
 
-  const _NovaListaSheet({Key? key, required this.onAtualizar})
-    : super(key: key);
+  const _NovaListaSheet({required this.onAtualizar});
 
   @override
   State<_NovaListaSheet> createState() => _NovaListaSheetState();

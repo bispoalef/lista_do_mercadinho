@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:lista_do_mercadinho/features/compras/view/pages/dashboard_page.dart';
 import 'package:provider/provider.dart';
+
+// --- IMPORT DO ADMOB ---
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/theme/theme_provider.dart';
 import 'features/compras/providers/lista_produtos.dart';
+import 'features/compras/view/pages/dashboard_page.dart';
 import 'features/compras/view/pages/home_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await MobileAds.instance.initialize();
+
   runApp(const MyApp());
 }
 
@@ -24,35 +31,47 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Lista de Compras',
+            title: 'MercadoFácil',
+
             theme: ThemeData(
               useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.teal,
-                brightness: Brightness.light,
+              colorSchemeSeed: const Color(0xFFE6A26C),
+              brightness: Brightness.light,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+                backgroundColor: Color(0xFFF6DFC3),
+                foregroundColor: Color(0xFF5C7B6D),
               ),
-              appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
               cardTheme: const CardThemeData(
+                color: Colors.white,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(16)),
                 ),
               ),
             ),
+
             darkTheme: ThemeData(
               useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.teal,
-                brightness: Brightness.dark,
+              colorSchemeSeed: const Color(0xFF8CA99A),
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF1A2B2B),
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+                backgroundColor: Color(0xFF2F4F4F),
+                foregroundColor: Colors.white,
               ),
-              appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
               cardTheme: const CardThemeData(
+                color: Color(0xFF243A3A),
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(16)),
                 ),
               ),
             ),
+
             themeMode: themeProvider.themeMode,
             initialRoute: 'dashboard',
             routes: {
