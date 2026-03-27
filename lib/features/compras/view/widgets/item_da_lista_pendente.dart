@@ -1,4 +1,4 @@
-import 'dart:math'; // Necessário para a fórmula da tremidinha
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../models/produto.dart';
@@ -133,45 +133,53 @@ class _ItemDaListaPendenteState extends State<ItemDaListaPendente>
         },
         child: Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            leading: Checkbox(
-              value: false,
-              onChanged: (bool? newValue) {
-                if (widget.produto.preco == 0) {
-                  _darTremidinha();
-                } else {
-                  widget.list.removerProduto(widget.produto);
-                }
-              },
-            ),
-            title: Text(
-              widget.produto.nome,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Text(
-              'Qtd: ${widget.produto.quantidade}  •  R\$ ${widget.produto.preco.toStringAsFixed(2)}',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => EditProdutoDialog(
+                  produto: widget.produto,
+                  lista: widget.list,
+                ),
+              );
+            },
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
               ),
-            ),
-            trailing: IconButton(
-              icon: Icon(
+              leading: Checkbox(
+                value: false,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                onChanged: (bool? newValue) {
+                  if (widget.produto.preco == 0) {
+                    _darTremidinha();
+                  } else {
+                    widget.list.removerProduto(widget.produto);
+                  }
+                },
+              ),
+              title: Text(
+                widget.produto.nome,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              subtitle: Text(
+                'Qtd: ${widget.produto.quantidade}  •  R\$ ${widget.produto.preco.toStringAsFixed(2)}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: Icon(
                 Icons.edit_outlined,
                 color: Theme.of(context).colorScheme.primary,
+                size: 20,
               ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => EditProdutoDialog(
-                    produto: widget.produto,
-                    lista: widget.list,
-                  ),
-                );
-              },
             ),
           ),
         ),
