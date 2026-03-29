@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../models/produto.dart';
 import '../../providers/lista_produtos.dart';
-import 'edit_produto_dialog.dart';
 
 class ItemDaListaCarrinho extends StatelessWidget {
   final Produto produto;
@@ -19,7 +18,6 @@ class ItemDaListaCarrinho extends StatelessWidget {
     return Dismissible(
       key: ValueKey(produto.id),
       direction: DismissDirection.horizontal,
-
       background: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -34,7 +32,6 @@ class ItemDaListaCarrinho extends StatelessWidget {
           size: 28,
         ),
       ),
-
       secondaryBackground: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -49,7 +46,6 @@ class ItemDaListaCarrinho extends StatelessWidget {
           size: 28,
         ),
       ),
-
       confirmDismiss: (direction) async {
         return await showDialog(
               context: context,
@@ -82,47 +78,32 @@ class ItemDaListaCarrinho extends StatelessWidget {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) =>
-                  EditProdutoDialog(produto: produto, lista: list),
-            );
-          },
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: Checkbox(
+            value: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
             ),
-            leading: Checkbox(
-              value: true,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              onChanged: (bool? newValue) {
-                list.removerProduto(produto);
-              },
-            ),
-            title: Text(
-              produto.nome,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                decoration: TextDecoration.lineThrough,
-                color: Colors.grey,
-              ),
-            ),
-            subtitle: Text(
-              'Qtd: ${produto.quantidade}  •  R\$ ${produto.preco.toStringAsFixed(2)}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-            trailing: const Icon(
-              Icons.edit_outlined,
+            onChanged: (bool? newValue) {
+              list.restaurarProduto(produto);
+            },
+          ),
+          title: Text(
+            produto.nome,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              decoration: TextDecoration.lineThrough,
               color: Colors.grey,
-              size: 20,
             ),
+          ),
+          subtitle: Text(
+            'Qtd: ${produto.quantidade}  •  R\$ ${produto.preco.toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.grey),
           ),
         ),
       ),
