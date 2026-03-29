@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// --- IMPORT DO ADMOB ---
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/theme/theme_provider.dart';

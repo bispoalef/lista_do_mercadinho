@@ -512,7 +512,6 @@ class _DetalhesCompraSheetState extends State<_DetalhesCompraSheet> {
                     ).importarItens(itensParaImportar);
 
                     Navigator.pop(context);
-                    // Puxa o gatilho ao voltar!
                     Navigator.pushNamed(
                       context,
                       'home',

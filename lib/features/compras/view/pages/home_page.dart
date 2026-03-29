@@ -118,13 +118,50 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         )
-                      : ListView.builder(
+                      : lista.getLista.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Nenhum item pendente.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : ReorderableListView.builder(
+                          buildDefaultDragHandles: false,
+
+                          proxyDecorator:
+                              (
+                                Widget child,
+                                int index,
+                                Animation<double> animation,
+                              ) {
+                                return AnimatedBuilder(
+                                  animation: animation,
+                                  builder:
+                                      (BuildContext context, Widget? child) {
+                                        return Material(
+                                          elevation: 4,
+                                          color: Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          child: child,
+                                        );
+                                      },
+                                  child: child,
+                                );
+                              },
+
+                          onReorder: (oldIndex, newIndex) {
+                            lista.reordenarLista(oldIndex, newIndex);
+                          },
                           itemCount: lista.getLista.length,
                           itemBuilder: (ctx, i) {
                             final produto = lista.getLista[i];
                             return ItemDaListaPendente(
+                              key: ValueKey(produto.id),
                               produto: produto,
                               list: lista,
+                              index: i,
                             );
                           },
                         ),
@@ -141,6 +178,7 @@ class _HomePageState extends State<HomePage> {
                           itemBuilder: (ctx, i) {
                             final produto = lista.getCarrinho[i];
                             return ItemDaListaCarrinho(
+                              key: ValueKey(produto.id),
                               produto: produto,
                               list: lista,
                             );
@@ -186,9 +224,9 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-
                       Row(
                         children: [
+                          const SizedBox(width: 12),
                           Expanded(
                             child: FilledButton.icon(
                               onPressed: lista.getCarrinho.isEmpty
@@ -227,7 +265,6 @@ class _HomePageState extends State<HomePage> {
 
                                                 if (context.mounted) {
                                                   Navigator.pop(ctx);
-
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).showSnackBar(
@@ -239,9 +276,7 @@ class _HomePageState extends State<HomePage> {
                                                           .floating,
                                                     ),
                                                   );
-
                                                   Navigator.pop(context);
-
                                                   if (_interstitialAd != null) {
                                                     _interstitialAd!.show();
                                                   }
@@ -259,7 +294,6 @@ class _HomePageState extends State<HomePage> {
                               label: const Text('Finalizar'),
                             ),
                           ),
-                          const SizedBox(width: 12),
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () {

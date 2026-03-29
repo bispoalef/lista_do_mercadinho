@@ -66,6 +66,18 @@ class ListaDeProdutos extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reordenarLista(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    final item = _list.removeAt(oldIndex);
+    _list.insert(newIndex, item);
+
+    _persistirRascunho();
+    notifyListeners();
+  }
+
   void importarItens(List<Produto> itensParaImportar) {
     for (var item in itensParaImportar) {
       final jaExiste =
