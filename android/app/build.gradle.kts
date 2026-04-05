@@ -1,44 +1,50 @@
-    plugins {
-        id("com.android.application")
-        id("kotlin-android")
-        id("dev.flutter.flutter-gradle-plugin")
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.lista_do_mercadinho"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
-    android {
-        namespace = "com.alefbs.mercadofacil"
-        compileSdk = flutter.compileSdkVersion
-        ndkVersion = flutter.ndkVersion
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
 
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-        }
+    defaultConfig {
+        applicationId = "com.alefbs.mercadofacil"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
 
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
-
-        sourceSets {
-            getByName("main") {
-                java.srcDirs("src/main/kotlin")
-            }
-        }
-
-        defaultConfig {
-            applicationId = "com.alefbs.mercadofacil"
-            minSdk = flutter.minSdkVersion
-            targetSdk = flutter.targetSdkVersion
-            versionCode = flutter.versionCode
-            versionName = flutter.versionName
-        }
-
-        buildTypes {
-            release {
-                signingConfig = signingConfigs.getByName("release")
-            }
+    // 1. PRIMEIRO ELE CRIA A ASSINATURA AQUI
+    signingConfigs {
+        create("release") {
+            keyAlias = "upload"
+            keyPassword = "Blacksabbath21@"
+            storePassword = "Blacksabbath21@"
+            storeFile = file("upload-keystore.jks") 
         }
     }
 
-    flutter {
-        source = "../.."
+    // 2. DEPOIS ELE APLICA A ASSINATURA NA VERSÃO FINAL
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
+}
+
+flutter {
+    source = "../.."
+}

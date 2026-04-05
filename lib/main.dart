@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'MercadoFácil',
+            title: 'Mercado Facil',
 
             theme: ThemeData(
               useMaterial3: true,

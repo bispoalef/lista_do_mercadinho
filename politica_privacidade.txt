@@ -1,7 +1,7 @@
-Política de Privacidade - MercadoFácil
-Esta Política de Privacidade descreve como o aplicativo MercadoFácil lida com as informações dos usuários. Ao utilizar o MercadoFácil, você concorda com as práticas descritas aqui.
+Política de Privacidade - Mercado Facil
+Esta Política de Privacidade descreve como o aplicativo Mercado Facil lida com as informações dos usuários. Ao utilizar o Mercado Facil, você concorda com as práticas descritas aqui.
 1. Coleta e Uso de Dados
-O MercadoFácil foi projetado para ser uma ferramenta de utilidade pessoal.
+O Mercado Facil foi projetado para ser uma ferramenta de utilidade pessoal.
 Dados de Lista: Todos os itens, preços e quantidades que você insere no aplicativo são armazenados exclusivamente no seu dispositivo móvel.
 Informações Pessoais: O aplicativo não solicita, não coleta e não armazena nomes, e-mails, números de telefone ou qualquer dado de identificação pessoal.
 2. Permissões do Dispositivo
@@ -11,7 +11,7 @@ Para oferecer uma experiência gratuita, o aplicativo pode utilizar:
 Google AdMob: Para exibição de anúncios. O Google pode coletar um identificador de publicidade anônimo do seu dispositivo para servir anúncios relevantes.
 Firebase Analytics: Para coletar dados estatísticos anônimos (como quais telas são mais usadas) para que possamos melhorar o app.
 4. Privacidade de Crianças
-O MercadoFácil não coleta conscientemente dados de crianças menores de 13 anos. Como não há coleta de dados pessoais, o app é seguro para uso familiar, mas recomendamos que menores utilizem o app sob supervisão.
+O Mercado Facil não coleta conscientemente dados de crianças menores de 13 anos. Como não há coleta de dados pessoais, o app é seguro para uso familiar, mas recomendamos que menores utilizem o app sob supervisão.
 5. Segurança
 A segurança dos seus dados de compras depende da segurança do seu próprio aparelho, uma vez que as informações não saem do seu celular para nossos servidores.
 6. Alterações e Contato
